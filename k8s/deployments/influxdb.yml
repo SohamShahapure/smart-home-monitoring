@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+  namespace: smart-home
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+      - name: influxdb
+        image: influxdb:2.7
+        ports:
+        - containerPort: 8086
+        env:
+        - name: DOCKER_INFLUXDB_INIT_MODE
+          value: "setup"
+        - name: DOCKER_INFLUXDB_INIT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_USERNAME
+        - name: DOCKER_INFLUXDB_INIT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_PASSWORD
+        - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+        - name: DOCKER_INFLUXDB_INIT_ORG
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_ORG
+        - name: DOCKER_INFLUXDB_INIT_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_BUCKET
+        - name: DOCKER_INFLUXDB_INIT_RETENTION
+          value: "1w"
+        volumeMounts:
+        - name: influxdb-data
+          mountPath: /var/lib/influxdb2
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8086
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8086
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: influxdb-data
+        persistentVolumeClaim:
+          claimName: influxdb-pvc
+

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: smart-home
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+      - name: mosquitto
+        image: eclipse-mosquitto:2.0
+        ports:
+        - containerPort: 1883
+        - containerPort: 9001
+        volumeMounts:
+        - name: mosquitto-config
+          mountPath: /mosquitto/config
+        - name: mosquitto-data
+          mountPath: /mosquitto/data
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - timeout 5 mosquitto_pub -h localhost -t health/check -m 'health'
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - timeout 5 mosquitto_pub -h localhost -t health/check -m 'health'
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: mosquitto-config
+        configMap:
+          name: mosquitto-config
+      - name: mosquitto-data
+        persistentVolumeClaim:
+          claimName: mosquitto-pvc
+

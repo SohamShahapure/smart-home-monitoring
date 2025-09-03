@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-subscriber
+  namespace: smart-home
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-subscriber
+  template:
+    metadata:
+      labels:
+        app: data-subscriber
+    spec:
+      containers:
+      - name: data-subscriber
+        image: yourusername/smart-home-subscriber:latest  # Replace with your DockerHub username
+        env:
+        - name: MQTT_BROKER
+          value: mosquitto-service
+        - name: MQTT_PORT
+          value: "1883"
+        - name: INFLUXDB_URL
+          value: http://influxdb-service:8086
+        - name: INFLUXDB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+        - name: INFLUXDB_ORG
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_ORG
+        - name: INFLUXDB_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-secrets
+              key: DOCKER_INFLUXDB_INIT_BUCKET
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 60
+          timeoutSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+
