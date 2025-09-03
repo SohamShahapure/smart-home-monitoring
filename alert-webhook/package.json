@@ -1,0 +1,14 @@
+{
+  "name": "smart-home-alert-webhook",
+  "version": "1.0.0",
+  "description": "Receives Grafana alert webhooks for Smart-Home-Monitoring",
+  "main": "alert-webhook.js",
+  "scripts": {
+    "start": "node alert-webhook.js"
+  },
+  "author": "YOUR NAME <sohamshahapure.codes@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
